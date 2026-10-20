@@ -1,164 +1,180 @@
-# Panasonic HLG Photo (.HSP) → HEIC
+# 松下 HLG Photo (.HSP) → HEIC
 
-**Lossless converter that turns Panasonic LUMIX HLG Photo files into HDR HEIC images
-you can actually open on a phone.**
+**把松下 LUMIX 的 HLG Photo 无损转换成手机能直接看的 HDR HEIC。**
 
-[中文说明](README.zh-CN.md) · [MIT License](LICENSE) · [Sample photos: CC BY-NC-SA 4.0](samples/README.md)
+[English](README.en.md) · [MIT 协议](LICENSE) · [样片：CC BY-NC-SA 4.0](samples/README.md)
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8%2B-3776AB.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 ![Lossless](https://img.shields.io/badge/pixel%20data-lossless-success.svg)
 
+![图形界面](docs/screenshot.png)
+
 ---
 
-## Why
+## 为什么需要它
 
-Panasonic's **HLG Photo** format (`.HSP`, available on LUMIX S1 / S5 / S5 II and others)
-stores a 10-bit HLG HDR still — but only Panasonic's Windows extension and a Photoshop
-plug-in can open it. Phones can't, so the HDR stays locked on the desktop.
+松下的 **HLG Photo** 格式（`.HSP`，S1 / S5 / S5 II 等机型支持）保存的是 10-bit HLG HDR
+静态照片，但只有松下的 Windows 查看扩展和 Photoshop 插件能打开。手机打不开，HDR 就被
+困在电脑里。
 
-**HEIC is just HEVC inside a HEIF container.** An `.HSP` already contains a HEVC Main10
-bitstream, so there is no need to decode and re-encode anything: the stream can be
-re-wrapped into HEIC with the correct colour tags, and every phone that speaks HEIC
-(iPhone, iPad, Android) will open it, HLG HDR included.
+**HEIC 本质就是 HEVC 编码的 HEIF 容器**，而 `.HSP` 里面已经是一段 HEVC Main10 码流。
+所以完全不需要解码再重新压缩：只要把码流重新装进 HEIC 容器、写对色彩标签，iPhone、
+iPad、Android 上的相册就能直接打开，HDR 也能保留。
 
-## Features
+## 下载
 
-- **Truly lossless** — the HEVC bitstream is copied byte-for-byte, no decoding, no re-compression.
-- **HDR preserved** — 10-bit 4:2:0, BT.2020 primaries, HLG transfer, BT.2020 non-constant matrix, limited range.
-- **EXIF preserved** — camera, lens, capture time with timezone, shutter, aperture, ISO, focal length, author, copyright.
-- **Fast** — about 10 ms per 24 MP photo.
-- **Zero dependencies** — pure Python standard library (3.8+).
-- **One-click on Windows** — `convert.bat`, double-click or drag a folder onto it.
-- **Bilingual CLI** — follows the system language, or force it with `--lang zh|en`.
+| 版本 | 文件 | 适合 |
+|---|---|---|
+| **Windows 图形界面（推荐）** | [HSP2HEIC.exe](https://github.com/Baizhi-Angelica/panasonic-hsp-to-heic/releases/latest/download/HSP2HEIC.exe) | 双击运行，选择文件夹或照片即可 |
+| **Windows 便携版** | [HSP2HEIC-portable-win64.zip](https://github.com/Baizhi-Angelica/panasonic-hsp-to-heic/releases/latest/download/HSP2HEIC-portable-win64.zip) | 解压即用，内置 Python，命令行 / bat |
+| 源码 | `python hsp2heic.py` | 已装 Python 3.8+，无第三方依赖 |
 
-## How it works
+全部版本都在 [Releases](https://github.com/Baizhi-Angelica/panasonic-hsp-to-heic/releases) 页面。
 
-```
-.HSP (TIFF container)
-├── IFD0 + ExifIFD  ──────────────► rebuilt as standard EXIF
-├── 64 KB Panasonic private block (dimensions, statistics — unused)
-├── HEVC Main10 Annex B bitstream ─► copied into HEIF "mdat", NAL by NAL
-└── JPEG previews (IFD1/IFD2)     (not used)
+## 一、图形界面（exe）
 
-.HEIC (ISO/IEC 23008-12)
-├── ftyp   heix / mif1 / miaf
-├── meta   hvcC (VPS/SPS/PPS from the bitstream), colr nclx, ispe, pixi
-├── mdat   the original slices
-└── Exif   item linked with a cdsc reference
-```
+1. 双击 **`HSP2HEIC.exe`**。
+2. 点 **选择文件夹**（递归转换里面所有 `.HSP`）或 **选择照片**（可多选）。
+3. 转换完成后，结果在源文件旁边的 **`HEIC`** 子文件夹里；原 `.HSP` 不动。
+4. 点 **打开输出文件夹** 直接查看。
 
-The only bytes this tool writes are container headers, the colour profile and the
-EXIF block — the image data is untouched. Details in [docs/hsp-format.md](docs/hsp-format.md).
+选项：勾选“覆盖已存在的 HEIC”会重新生成同名文件；转换过程中可以点“停止”。
 
-## Requirements
+> **Windows 提示“未知发布者”？** exe 没有购买代码签名证书，SmartScreen 会拦一下。
+> 点“更多信息 → 仍要运行”即可。
+>
+> **杀毒软件误报？** PyInstaller 打包的程序偶尔会被误报。可以换成便携版（纯 Python + bat），
+> 或把 exe 加入白名单。
 
-- Python **3.8+** (standard library only, nothing to `pip install`)
-- Windows: `convert.bat` finds `py -3`, `python`, or a portable runtime in `_tool\python\`
-- macOS / Linux: run `python3 hsp2heic.py`
+## 二、便携版（zip）
 
-## Usage
-
-### Windows, one click
+解压后目录：
 
 ```
-panasonic-hsp-to-heic\
-├── convert.bat
-├── hsp2heic.py
-├── raw_file\          ← put your .HSP files here
-└── samples\           ← demo files
+HSP2HEIC-portable\
+├─ convert.bat          ← 双击这个
+├─ hsp2heic.py
+├─ 使用说明.txt
+├─ raw_file\            ← 把 .HSP 放这里
+└─ _tool\python\        ← 内置 Python，无需安装
 ```
 
-1. Copy your `.HSP` files into `raw_file\` (or any folder).
-2. Double-click **`convert.bat`**.
-3. Results land in `raw_file\HEIC\`; the original `.HSP` files are kept.
+1. 把 `.HSP` 放进 `raw_file\`（或任意文件夹）。
+2. 双击 `convert.bat`。
+3. 结果在 `raw_file\HEIC\`。
 
-You can also **drag a folder** (or a few `.HSP` files) onto `convert.bat` — it walks the
-folder recursively and writes a `HEIC\` sub-folder next to each source.
+也可以把任意文件夹或几个 `.HSP` 文件**拖到 `convert.bat` 上**，程序会递归处理，
+并在每个源文件夹旁边生成 `HEIC\`。
 
-### Command line
+## 三、命令行 / 源码
+
+需要 Python 3.8+（只用标准库，不用 `pip install` 任何东西）：
 
 ```bash
-python hsp2heic.py                        # convert ./raw_file
-python hsp2heic.py "D:\Photos\Harbor"     # convert a folder
-python hsp2heic.py a.HSP b.HSP            # convert individual files
+python hsp2heic.py                        # 转换 ./raw_file
+python hsp2heic.py "D:\照片\码头"          # 转换指定文件夹
+python hsp2heic.py a.HSP b.HSP            # 转换单个文件
 ```
 
-| Option | Description |
+| 参数 | 说明 |
 |---|---|
-| `--out DIR` | write all results to `DIR` instead of `HEIC\` sub-folders |
-| `--force` | overwrite existing `.HEIC` files |
-| `--replace` | delete the source `.HSP` after a successful conversion |
-| `--no-recursive` | do not walk sub-folders |
-| `--lang zh\|en` | force console language (defaults to the system UI language) |
-| `-h`, `--help` | show help |
+| `--out DIR` | 全部输出到 `DIR`，不建 `HEIC\` 子文件夹 |
+| `--force` | 覆盖已存在的 `.HEIC` |
+| `--replace` | 转换成功后删除原 `.HSP`（谨慎） |
+| `--no-recursive` | 不递归子文件夹 |
+| `--lang zh\|en` | 指定输出语言（默认跟随系统） |
+| `-h`, `--help` | 显示帮助 |
 
-## Output
+## 特性
 
-| Property | Value |
+- **真正无损** —— HEVC 码流逐字节拷贝，不解码、不二次压缩。
+- **保留 HDR** —— 10-bit 4:2:0、BT.2020 原色、HLG 传输、BT.2020 非恒定亮度矩阵、limited range。
+- **保留 EXIF** —— 机身、镜头、拍摄时间（含时区）、快门、光圈、ISO、焦距、作者、版权。
+- **快** —— 2400 万像素约 10 毫秒一张。
+- **零依赖** —— 纯 Python 标准库；Windows 版已打包好 Python。
+- **中英双语** —— 界面和命令行自动跟随系统语言。
+
+## 原理
+
+```
+.HSP（TIFF 容器）
+├── IFD0 + ExifIFD  ──────────────► 重建成标准 EXIF
+├── 64 KB 松下私有块（尺寸、统计信息，本工具不使用）
+├── HEVC Main10 Annex B 码流 ─────► 逐个 NAL 搬进 HEIF 的 mdat
+└── JPEG 预览图（IFD1/IFD2）       不使用
+
+.HEIC（ISO/IEC 23008-12）
+├── ftyp   heix / mif1 / miaf
+├── meta   hvcC（从码流提取的 VPS/SPS/PPS）、colr nclx、ispe、pixi
+├── mdat   原始图像分片
+└── Exif   通过 cdsc 引用关联到主图
+```
+
+除了容器头、色彩描述和 EXIF 之外，工具不写任何像素数据。格式细节见
+[docs/hsp-format.md](docs/hsp-format.md)。
+
+## 输出文件
+
+| 项目 | 内容 |
 |---|---|
-| Container | HEIC (`heix`, compatible with `mif1` + `miaf`) |
-| Image | 5984 × 4000, 10-bit, 4:2:0 (same as the camera stream) |
-| Colour | BT.2020 / HLG / BT.2020 NC, limited range (`nclx` 9/18/9, full_range = 0) |
-| Metadata | standard EXIF (no MakerNote, see limitations) |
-| Size | roughly the `.HSP` minus its embedded JPEG preview — 2.6–4.5 MB per 24 MP photo |
-| Speed | ≈ 10 ms per photo |
+| 容器 | HEIC（`heix`，兼容 `mif1` + `miaf`） |
+| 图像 | 5984 × 4000，10-bit，4:2:0（与相机码流一致） |
+| 色彩 | BT.2020 / HLG / BT.2020 NC，limited range（`nclx` 9/18/9，full_range = 0） |
+| 元数据 | 标准 EXIF（不含 MakerNote，见限制） |
+| 体积 | 约为原 `.HSP` 减去内嵌 JPEG 预览图，2400 万像素约 2.6–4.5 MB |
+| 速度 | 每张约 10 毫秒 |
 
-## Compatibility
+## 兼容性
 
-| Platform | Behaviour |
+| 平台 | 表现 |
 |---|---|
-| iPhone / iPad (Photos) | Opens natively; HDR shown on HDR-capable displays |
-| Windows 11 (Photos / Explorer) | Needs the free *HEIF Image Extension* from the Microsoft Store |
-| Android / Google Photos | Opens with any HEIF-capable gallery; HDR depends on the device |
-| SDR-only viewers | Tone-mapped to SDR by the OS; never washed-out or black |
-| Messaging apps (WeChat etc.) | May re-encode to SDR JPEG on send — the original file is unaffected |
+| iPhone / iPad（相册） | 原生打开；支持 HDR 的屏幕按 HDR 显示 |
+| Windows 11（照片 / 资源管理器） | 需要 Microsoft Store 免费的“HEIF 图像扩展” |
+| Android / Google Photos | 支持 HEIF 的相册都能打开，HDR 取决于设备 |
+| 只支持 SDR 的查看器 | 由系统自动 tone mapping，不会发灰或全黑 |
+| 微信等聊天软件 | 发送时可能被转成 SDR JPEG，原文件不受影响 |
 
-## Limitations
+## 限制
 
-- Only **4:2:0, 10/12-bit HLG** HEVC streams are accepted — that is what LUMIX HLG Photo writes.
-- Panasonic's **MakerNote** is dropped: it uses absolute file offsets, which cannot survive a container move.
-- **GPS** is not carried over (none of the reference files contain it).
-- EXIF `Orientation` is preserved as-is; no HEIF `irot` box is written. All reference files are orientation 1.
-- Output is a plain **HLG HEIC**, not an Apple/ISO 21496-1 "gain map" HDR photo. iOS 18 and Android 15
-  gain-map support could be added in a future version.
-- Windows Explorer's property panel only surfaces part of the EXIF for HEIC files; the metadata is
-  in the file (check with exiftool, Lightroom, or on the iPad).
+- 只支持 **4:2:0、10/12-bit 的 HLG** HEVC 码流，也就是 LUMIX HLG Photo 实际写出的格式。
+- 松下的 **MakerNote** 不保留：它使用绝对文件偏移，换容器后无法安全搬迁。
+- **GPS** 不保留（参考样片里本来也没有）。
+- EXIF 的 `Orientation` 原样保留，但不写 HEIF 的 `irot` 盒；参考样片都是 orientation 1。
+- 输出是标准的 **HLG HEIC**，不是 Apple / ISO 21496-1 的“增益图”HDR 照片。
+  iOS 18 与 Android 15 的增益图 HDR 可以在后续版本里加。
+- Windows 资源管理器的属性面板对 HEIC 只显示部分 EXIF；元数据本身在文件里
+  （可用 exiftool、Lightroom 或 iPad 查看）。
 
-## Verification
+## 验证情况
 
-- 13 photos shot on a **DC-S5 (firmware 2.8)** with an APO-SUMMICRON-SL 35 mm f/2.
-- For every output, the HEVC slices are **byte-identical** to the source `.HSP`.
-- All outputs decode correctly with **libheif 1.23.6** and the **Windows Imaging Component** (WIC).
-- Colour tags verified as `nclx: primaries=9, transfer=18, matrix=9, full_range=0`.
+- 13 张样片，机身 **DC-S5（固件 2.8）**，镜头 APO-SUMMICRON-SL 35 mm f/2。
+- 每张输出的 HEVC 分片与源 `.HSP` **逐字节相同**。
+- 全部输出经 **libheif 1.23.6** 与 **Windows Imaging Component (WIC)** 解码验证。
+- 色彩标签确认：`nclx: primaries=9, transfer=18, matrix=9, full_range=0`。
+- exe 与便携版都用样片跑过自检，输出哈希与参考文件一致。
 
-## Samples
+## 样片
 
-Three reference pairs live in [`samples/`](samples/README.md):
+[`samples/`](samples/README.md) 里有三组参考文件：
 
-| File | Scene | Why this sample |
+| 文件 | 场景 | 选它的原因 |
 |---|---|---|
-| `_PAN0301` | Harbour at dusk | bright sky + deep shadows |
-| `_PAN0766` | Interior, backlit window | extreme dynamic range |
-| `_PAN0976` | Lake and hills | smooth gradients, skin-tone-free colour check |
+| `_PAN0301` | 黄昏码头 | 亮天空 + 深阴影 |
+| `_PAN0766` | 室内逆光窗 | 极大动态范围 |
+| `_PAN0976` | 湖光山色 | 平滑渐变，检查色彩过渡 |
 
-They are licensed **CC BY-NC-SA 4.0** (photos), separate from the MIT-licensed code.
+照片采用 **CC BY-NC-SA 4.0** 协议，与代码的 MIT 协议分开。
 
-## Format notes
+## 协议
 
-Reverse-engineered details of the `.HSP` container and the exact HEIF layout this tool
-writes are documented in [docs/hsp-format.md](docs/hsp-format.md).
+- **代码** —— [MIT](LICENSE)，© 2026 Baizhi-Angelica。
+- **样片** —— [CC BY-NC-SA 4.0](samples/LICENSE-CC-BY-NC-SA-4.0.txt)，© 2026 Baizhi-Angelica。
 
-## License
+HEIC/HEVC 的专利授权与本仓库无关；本工具只重新封装你自己已经拥有的数据。
 
-- **Code** — [MIT](LICENSE), © 2026 Baizhi-Angelica.
-- **Sample photographs** — [CC BY-NC-SA 4.0](samples/LICENSE-CC-BY-NC-SA-4.0.txt), © 2026 Baizhi-Angelica.
+## 致谢
 
-HEIC/HEVC patent licensing is separate from this repository; the tool only re-wraps
-data you already own.
-
-## Acknowledgements
-
-- [libheif](https://github.com/strukturag/libheif) and its `heif-info` / decoding stack, used to validate outputs.
-- Everyone who documented the HLG Photo format before this.
+- [libheif](https://github.com/strukturag/libheif) 及其解码栈，用于验证输出。
+- 以及此前所有记录过 HLG Photo 格式的人。

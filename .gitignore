@@ -1,0 +1,17 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Local working folders
+raw_file/
+_tool/python/
+.venv/
+venv/
+
+# Temporary output
+*.tmp
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store

@@ -535,9 +535,16 @@ def find_sources(paths, recursive=True):
 
 
 def default_targets():
-    root = os.path.dirname(os.path.abspath(__file__))
-    raw = os.path.join(root, "raw_file")
-    return [raw] if os.path.isdir(raw) else [root]
+    here = os.path.dirname(os.path.abspath(__file__))
+    raw = os.path.join(here, "raw_file")
+    if os.path.isdir(raw):
+        return [raw]
+    # The Windows bundle keeps this script in _tool\, next to the real root.
+    if os.path.basename(here).lower() == "_tool":
+        raw = os.path.join(os.path.dirname(here), "raw_file")
+        if os.path.isdir(raw):
+            return [raw]
+    return [here]
 
 
 def human(n):

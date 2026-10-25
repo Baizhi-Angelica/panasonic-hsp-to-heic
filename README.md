@@ -29,6 +29,10 @@
 是 `hsp2heic.py` 的移植版，跑在浏览器里，不需要服务器算力。
 
 > 提示：`*.workers.dev` 在中国大陆直连不稳定，可能需要代理。纯本地转换也可以直接用下面的 Windows 版本。
+>
+> 有余力的话，建议自己部署一份到自己的域名：fork 本仓库，把 `web/astro.config.mjs` 里的 `site`
+> 和 `web/wrangler.jsonc` 里的 `name` 改成自己的，然后 `cd web && npm install && npm run deploy`。
+> Cloudflare 的免费额度对个人使用绰绰有余，这样既不受公共域名线路的影响，数据路径也完全在你自己手里 (￣▽￣)
 
 ---
 

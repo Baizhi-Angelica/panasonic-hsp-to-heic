@@ -13,6 +13,25 @@
 
 ---
 
+## 网页版（新增）
+
+**<https://hlgconv.biotech-prank-0u.workers.dev>**
+
+不想装软件，或者人在 iPad / 手机上时，打开这个页面就行：
+
+- 拖入或选择 `.HSP`，单张多张都可以（只接受 `.HSP`，其他格式会被挡掉并提示）
+- 单张 → 直接下载 `.HEIC`；多张 → 打包成一个 `.zip`
+- 转换在**你的浏览器里**完成，照片不会上传到任何服务器，也没有云端副本需要删除
+- 有总进度条、逐张状态、夜间模式，手机 / iPad 自适应
+- 输出与下面的命令行工具**逐字节相同**（三个样片的 SHA-256 一致）
+
+源码在 [`web/`](web/)，Astro + 原生 JS；转换内核 [`web/src/lib/hsp2heic.js`](web/src/lib/hsp2heic.js)
+是 `hsp2heic.py` 的移植版，跑在浏览器里，不需要服务器算力。
+
+> 提示：`*.workers.dev` 在中国大陆直连不稳定，可能需要代理。纯本地转换也可以直接用下面的 Windows 版本。
+
+---
+
 ## 为什么需要它
 
 松下的 **HLG Photo** 格式（`.HSP`，S1 / S5 / S5 II 等机型支持）保存的是 10-bit HLG HDR
@@ -27,6 +46,7 @@ iPad、Android 上的相册就能直接打开，HDR 也能保留。
 
 | 版本 | 文件 | 适合 |
 |---|---|---|
+| **网页版（新增）** | [hlgconv.biotech-prank-0u.workers.dev](https://hlgconv.biotech-prank-0u.workers.dev) | iPad / 手机 / 别人的电脑，打开即用，照片不上传 |
 | **Windows 图形界面（推荐）** | [HSP2HEIC.exe](https://github.com/Baizhi-Angelica/panasonic-hsp-to-heic/releases/latest/download/HSP2HEIC.exe) | 双击运行，选择文件夹或照片即可 |
 | **Windows 便携版** | [HSP2HEIC-portable-win64.zip](https://github.com/Baizhi-Angelica/panasonic-hsp-to-heic/releases/latest/download/HSP2HEIC-portable-win64.zip) | 解压即用，内置 Python，命令行 / bat |
 | 源码 | `python hsp2heic.py` | 已装 Python 3.8+，无第三方依赖 |
@@ -86,6 +106,27 @@ python hsp2heic.py a.HSP b.HSP            # 转换单个文件
 | `--no-recursive` | 不递归子文件夹 |
 | `--lang zh\|en` | 指定输出语言（默认跟随系统） |
 | `-h`, `--help` | 显示帮助 |
+
+## 四、网页版（浏览器本地转换）
+
+**<https://hlgconv.biotech-prank-0u.workers.dev>**
+
+整个转换在浏览器里完成，照片没有任何上传动作——页面里根本不存在上传接口。
+
+- 拖入或选择 `.HSP`，单张多张都行（只接受 `.HSP`，其他格式会被忽略并提示）
+- 单张 → 直接下载 `.HEIC`；多张 → 打包成一个 `.zip` 下载
+- 有总进度条、逐张状态、暗色模式，手机 / iPad 自适应
+- 输出与命令行工具**逐字节相同**（样片 SHA-256 一致）
+
+源码在 [`web/`](web/)，Astro + 原生 JS，转换内核是 `web/src/lib/hsp2heic.js`（`hsp2heic.py` 的移植版）：
+
+```bash
+cd web
+npm install
+npm run dev        # 本地开发
+npm run verify     # 用 samples/ 校验输出与参考 HEIC 字节一致
+npm run build
+```
 
 ## 特性
 

@@ -20,3 +20,12 @@ Desktop.ini
 dist/
 build/
 *.spec
+
+# Web app (Astro) — installed deps, build output, local tooling state
+web/node_modules/
+web/dist/
+web/.npm-cache/
+web/.tmp/
+web/.cloudflare/
+web/.wrangler/
+web/.astro/
